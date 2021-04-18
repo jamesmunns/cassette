@@ -13,11 +13,23 @@ struct Demo {
 }
 
 impl Demo {
-    async fn entry(&mut self) -> Result<bool, ()> {
+    async fn entry(&mut self) -> ! {
+        loop {
+            self.entry_1().await;
+            self.entry_2().await;
+        }
+    }
+
+    async fn entry_1(&mut self) {
         self.start_at_zero().await;
         self.add_one_until_ten().await;
         self.sub_one_until_zero().await;
-        Ok(true)
+    }
+
+    async fn entry_2(&mut self) {
+        self.start_at_five().await;
+        self.sub_one_until_zero().await;
+        self.add_one_until_ten().await;
     }
 
     async fn start_at_zero(&mut self) {
@@ -82,7 +94,7 @@ fn main() {
         match y {
             Poll::Pending => {}
             Poll::Ready(yes) => {
-                println!("Ready! {:?}", yes);
+                println!("done!");
                 break;
             }
         }
