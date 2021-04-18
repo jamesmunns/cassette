@@ -24,20 +24,20 @@ unsafe fn fake_drop(_: *const ()) {
 static RWVT: RawWakerVTable =
     RawWakerVTable::new(fake_clone, fake_wake, fake_wake_by_ref, fake_drop);
 
-pub struct CasMachine<'a, T>
+pub struct CasMachine<T>
 where
-    T: Future,
+    T: Future + Unpin,
 {
-    thing: Pin<&'a mut T>,
+    thing: T,
     fake_wake: Waker,
     done: bool,
 }
 
-impl<'a, T> CasMachine<'a, T>
+impl<T> CasMachine<T>
 where
-    T: Future,
+    T: Future + Unpin,
 {
-    pub fn new(thing: Pin<&'a mut T>) -> Self {
+    pub fn new(thing: T) -> Self {
         let raw_waker = RawWaker::new(core::ptr::null(), &RWVT);
         let waker = unsafe { Waker::from_raw(raw_waker) };
 
@@ -57,12 +57,21 @@ where
         }
 
         let mut ctxt = Context::from_waker(&self.fake_wake);
-        let y = self.thing.as_mut().poll(&mut ctxt);
+        let y = Pin::new(&mut self.thing).poll(&mut ctxt);
         match y {
             Poll::Pending => None,
             Poll::Ready(yes) => {
                 self.done = true;
                 Some(yes)
+            }
+        }
+    }
+
+    pub fn block_on(mut self) -> <T as Future>::Output {
+        assert!(!self.done); // TODO
+        loop {
+            if let Some(val) = self.poll_on() {
+                return val;
             }
         }
     }
