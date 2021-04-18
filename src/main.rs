@@ -1,20 +1,20 @@
-#![allow(dead_code, unused_imports, unused_variables)]
-
 use core::{
     future::Future,
     pin::Pin,
     sync::atomic::{AtomicU32, Ordering},
-    task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
+    task::{Context, Poll},
 };
-use futures::{future::poll_fn, pin_mut};
+use futures::pin_mut;
+
+use cassette::CasMachine;
 
 struct Demo {
     lol: u32,
 }
 
 impl Demo {
-    async fn entry(&mut self) -> ! {
-        loop {
+    async fn entry(&mut self) {
+        for _ in 0..10 {
             self.entry_1().await;
             self.entry_2().await;
         }
@@ -61,42 +61,17 @@ impl Demo {
     }
 }
 
-unsafe fn fake_clone(_: *const ()) -> RawWaker {
-    println!("!!! - fake_clone!");
-    todo!()
-}
-
-unsafe fn fake_wake(_: *const ()) {
-    println!("!!! - fake_wake!")
-}
-
-unsafe fn fake_wake_by_ref(_: *const ()) {
-    println!("!!! - fake_wake_by_ref!")
-}
-
-unsafe fn fake_drop(_: *const ()) {
-    println!("!!! - fake_drop!")
-}
-
-static RWVT: RawWakerVTable =
-    RawWakerVTable::new(fake_clone, fake_wake, fake_wake_by_ref, fake_drop);
-
 fn main() {
     let mut demo = Demo { lol: 100 };
     let x = demo.entry();
     pin_mut!(x);
 
-    let raw_waker = RawWaker::new(core::ptr::null(), &RWVT);
-    let waker = unsafe { Waker::from_raw(raw_waker) };
+    let mut cm = CasMachine::new(x);
 
     loop {
-        let y = x.as_mut().poll(&mut Context::from_waker(&waker));
-        match y {
-            Poll::Pending => {}
-            Poll::Ready(yes) => {
-                println!("done!");
-                break;
-            }
+        if let Some(x) = cm.poll_on() {
+            println!("Done!: `{:?}`", x);
+            break;
         }
     }
 }
@@ -114,7 +89,7 @@ struct CountFuture;
 
 impl Future for CountFuture {
     type Output = ();
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
         let x = FAKE.fetch_add(1, Ordering::SeqCst);
         print!("{}, ", x);
         if (x % 5) == 0 {
