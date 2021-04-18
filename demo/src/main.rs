@@ -4,9 +4,11 @@ use core::{
     sync::atomic::{AtomicU32, Ordering},
     task::{Context, Poll},
 };
-use futures::pin_mut;
 
-use cassette::CasMachine;
+use cassette::{
+    CasMachine,
+    pin_mut,
+};
 
 struct Demo {
     lol: u32,
