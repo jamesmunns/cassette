@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), no_std)]
+
 use core::{
     future::Future,
     pin::Pin,
@@ -5,20 +7,20 @@ use core::{
 };
 
 unsafe fn fake_clone(_: *const ()) -> RawWaker {
-    println!("!!! - fake_clone!");
     todo!()
 }
 
 unsafe fn fake_wake(_: *const ()) {
-    println!("!!! - fake_wake!")
+    todo!()
 }
 
 unsafe fn fake_wake_by_ref(_: *const ()) {
-    println!("!!! - fake_wake_by_ref!")
+    todo!()
 }
 
 unsafe fn fake_drop(_: *const ()) {
-    println!("!!! - fake_drop!")
+    // Don't panic, this does happen
+    // TODO: ???
 }
 
 static RWVT: RawWakerVTable =
@@ -53,7 +55,7 @@ where
     // if `self.done == true`?
     pub fn poll_on(&mut self) -> Option<<T as Future>::Output> {
         if self.done {
-            return None
+            todo!("Polled a done future");
         }
 
         let mut ctxt = Context::from_waker(&self.fake_wake);
@@ -68,7 +70,12 @@ where
     }
 
     pub fn block_on(mut self) -> <T as Future>::Output {
-        assert!(!self.done); // TODO
+        // TODO
+        assert!(
+            !self.done,
+            "Blocked on completed future"
+        );
+
         loop {
             if let Some(val) = self.poll_on() {
                 return val;
