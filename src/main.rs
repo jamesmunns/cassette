@@ -1,9 +1,12 @@
 #![allow(dead_code, unused_imports, unused_variables)]
 
-use futures::{
-    pin_mut,
-    future::poll_fn,
+use core::{
+    future::Future,
+    pin::Pin,
+    sync::atomic::{AtomicU32, Ordering},
+    task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
+use futures::{future::poll_fn, pin_mut};
 
 struct Demo {
     lol: u32,
@@ -16,7 +19,6 @@ impl Demo {
         self.sub_one_until_zero().await;
         Ok(true)
     }
-
 
     async fn start_at_zero(&mut self) {
         self.lol = 0;
@@ -31,7 +33,7 @@ impl Demo {
             cats(self).await; // simulate fake delays/not ready state
             self.lol += 1;
             if self.lol >= 10 {
-                return
+                return;
             }
         }
     }
@@ -41,21 +43,11 @@ impl Demo {
             cats(self).await; // simulate fake delays/not ready state
             self.lol -= 1;
             if self.lol == 0 {
-                return
+                return;
             }
         }
     }
 }
-
-use core::future::Future;
-use core::task::{
-    Poll,
-    RawWakerVTable,
-    RawWaker,
-    Context,
-    Waker,
-};
-use core::pin::Pin;
 
 unsafe fn fake_clone(_: *const ()) -> RawWaker {
     println!("!!! - fake_clone!");
@@ -74,12 +66,8 @@ unsafe fn fake_drop(_: *const ()) {
     println!("!!! - fake_drop!")
 }
 
-static RWVT: RawWakerVTable = RawWakerVTable::new(
-    fake_clone,
-    fake_wake,
-    fake_wake_by_ref,
-    fake_drop
-);
+static RWVT: RawWakerVTable =
+    RawWakerVTable::new(fake_clone, fake_wake, fake_wake_by_ref, fake_drop);
 
 fn main() {
     let mut demo = Demo { lol: 100 };
@@ -92,7 +80,7 @@ fn main() {
     loop {
         let y = x.as_mut().poll(&mut Context::from_waker(&waker));
         match y {
-            Poll::Pending => { },
+            Poll::Pending => {}
             Poll::Ready(yes) => {
                 println!("Ready! {:?}", yes);
                 break;
@@ -100,11 +88,6 @@ fn main() {
         }
     }
 }
-
-use std::sync::{
-    atomic::AtomicU32,
-    atomic::Ordering,
-};
 
 static FAKE: AtomicU32 = AtomicU32::new(0);
 
