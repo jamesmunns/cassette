@@ -1,6 +1,6 @@
 [package]
 name = "cassette"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["James Munns <james.munns@ferrous-systems.com>"]
 edition = "2018"
 license = "MPL-2.0"
