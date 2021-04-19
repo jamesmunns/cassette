@@ -1,10 +1,13 @@
 [package]
 name = "cassette"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["James Munns <james.munns@ferrous-systems.com>"]
 edition = "2018"
 license = "MPL-2.0"
 description = "A simple, single-future, non-blocking executor intended for building state machines"
 readme = "README.md"
+documentation = "https://docs.rs/cassette"
+homepage = "https://github.com/jamesmunns/cassette"
+repository = "https://github.com/jamesmunns/cassette"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
