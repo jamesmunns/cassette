@@ -6,7 +6,7 @@ use core::{
 };
 
 use cassette::{
-    CasMachine,
+    Cassette,
     pin_mut,
 };
 
@@ -44,7 +44,7 @@ impl Demo {
 
     async fn add_one_until_ten(&mut self) {
         loop {
-            cats(self).await; // simulate fake delays/not ready state
+            delay(self).await; // simulate fake delays/not ready state
             self.lol += 1;
             if self.lol >= 10 {
                 return;
@@ -54,7 +54,7 @@ impl Demo {
 
     async fn sub_one_until_zero(&mut self) {
         loop {
-            cats(self).await; // simulate fake delays/not ready state
+            delay(self).await; // simulate fake delays/not ready state
             self.lol -= 1;
             if self.lol == 0 {
                 return;
@@ -68,7 +68,7 @@ fn main() {
     let x = demo.entry();
     pin_mut!(x);
 
-    let mut cm = CasMachine::new(x);
+    let mut cm = Cassette::new(x);
 
     loop {
         if let Some(x) = cm.poll_on() {
@@ -78,17 +78,9 @@ fn main() {
     }
 }
 
+
 static FAKE: AtomicU32 = AtomicU32::new(0);
-
-async fn cats(ctxt: &mut Demo) {
-    println!("cats says lol: {}", ctxt.lol);
-    let x = CountFuture;
-    x.await;
-    println!("and cats!");
-}
-
 struct CountFuture;
-
 impl Future for CountFuture {
     type Output = ();
     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
@@ -100,4 +92,11 @@ impl Future for CountFuture {
             Poll::Pending
         }
     }
+}
+
+async fn delay(ctxt: &mut Demo) {
+    println!("delay says lol: {}", ctxt.lol);
+    let x = CountFuture;
+    x.await;
+    println!("and delay!");
 }

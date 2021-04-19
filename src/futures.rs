@@ -1,10 +1,18 @@
-//! Definition of the `PollFn` adapter combinator
+//! Items pulled from the `futures` crate
+//!
+//! This module is necessary due to a lack of ability to disable
+//! the use of atomic CAS operations in the futures crate. Eventually
+//! this module should go away.
+//
+// This module includes code licensed under the MIT+Apache2.0 dual
+// licenses from the `futures-rs` crate. Please see the upstream
+// repository at https://github.com/rust-lang/futures-rs, and details
+// of the license here: https://github.com/rust-lang/futures-rs#license
 
 use core::fmt;
 use core::pin::Pin;
 use core::future::Future;
 use core::task::{Context, Poll};
-
 
 /// Pins a value on the stack.
 ///
@@ -13,7 +21,7 @@ use core::task::{Context, Poll};
 /// # Example
 ///
 /// ```rust
-/// # use pin_utils::pin_mut;
+/// # use cassette::pin_mut;
 /// # use core::pin::Pin;
 /// # struct Foo {}
 /// let foo = Foo { /* ... */ };
@@ -58,18 +66,18 @@ impl<F> Unpin for PollFn<F> {}
 ///
 /// # Examples
 ///
-/// ```
-/// # futures::executor::block_on(async {
-/// use futures::future::poll_fn;
-/// use futures::task::{Context, Poll};
+/// ```no_run
+/// use cassette::futures::poll_fn;
+/// use core::task::{Context, Poll};
 ///
 /// fn read_line(_cx: &mut Context<'_>) -> Poll<String> {
 ///     Poll::Ready("Hello, World!".into())
 /// }
 ///
+/// # async fn func() {
 /// let read_future = poll_fn(read_line);
 /// assert_eq!(read_future.await, "Hello, World!".to_owned());
-/// # });
+/// # }
 /// ```
 pub fn poll_fn<T, F>(f: F) -> PollFn<F>
 where
