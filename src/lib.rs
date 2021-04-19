@@ -247,6 +247,7 @@ unsafe fn fake_drop(_: *const ()) {
 static RWVT: RawWakerVTable =
     RawWakerVTable::new(fake_clone, fake_wake, fake_wake_by_ref, fake_drop);
 
+/// A single-future non-blocking executor
 pub struct Cassette<T>
 where
     T: Future + Unpin,
@@ -260,6 +261,38 @@ impl<T> Cassette<T>
 where
     T: Future + Unpin,
 {
+    /// Create a new Cassette containing a single pinned future
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use cassette::{pin_mut, Cassette};
+    ///
+    /// struct Demo {
+    ///     lol: u32,
+    /// }
+    ///
+    /// impl Demo {
+    ///     async fn entry(&mut self) {
+    ///         /* Huzzah! */
+    ///     }
+    /// }
+    ///
+    /// fn main() {
+    ///     // Make a new struct
+    ///     let mut demo = Demo { lol: 100 };
+    ///
+    ///     // Call the entry point future, and pin it
+    ///     let x = demo.entry();
+    ///     pin_mut!(x);
+    ///
+    ///     // Give the pinned future to Cassette
+    ///     // for execution
+    ///     let mut cm = Cassette::new(x);
+    ///
+    ///     /* ... */
+    /// }
+    /// ```
     pub fn new(thing: T) -> Self {
         let raw_waker = RawWaker::new(core::ptr::null(), &RWVT);
         let waker = unsafe { Waker::from_raw(raw_waker) };
@@ -272,6 +305,44 @@ where
         }
     }
 
+    /// Perform a "single step" of the future contained by this
+    /// Cassette.
+    ///
+    /// This is intended to be "polled to completion", which
+    /// might be for forever.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use cassette::{pin_mut, Cassette};
+    ///
+    /// struct Demo {
+    ///     lol: u32,
+    /// }
+    ///
+    /// impl Demo {
+    ///     async fn entry(&mut self) {
+    ///         /* Huzzah! */
+    ///     }
+    /// }
+    ///
+    /// fn main() {
+    ///     // Make a new struct
+    ///     let mut demo = Demo { lol: 100 };
+    ///
+    ///     // Call the entry point future, and pin it
+    ///     let x = demo.entry();
+    ///     pin_mut!(x);
+    ///
+    ///     // Give the pinned future to Cassette
+    ///     // for execution
+    ///     let mut cm = Cassette::new(x);
+    ///
+    ///     while cm.poll_on().is_none() { }
+    ///     println!("Future done!");
+    /// }
+    /// ```
+    //
     // TODO: try_poll_on where an error is returned
     // if `self.done == true`?
     pub fn poll_on(&mut self) -> Option<<T as Future>::Output> {
@@ -290,6 +361,12 @@ where
         }
     }
 
+    /// Block on the contained future forever
+    ///
+    /// ## Panics
+    ///
+    /// This method will panic if the contained future has already
+    /// been completed as `Poll::Ready(_)`.
     pub fn block_on(mut self) -> <T as Future>::Output {
         // TODO
         assert!(
@@ -304,6 +381,7 @@ where
         }
     }
 
+    /// Has the contained future resolved to `Poll::Ready(_)` yet?
     pub fn is_done(&self) -> bool {
         self.done
     }
