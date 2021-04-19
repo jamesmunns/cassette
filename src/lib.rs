@@ -224,28 +224,19 @@ use core::{
 };
 pub mod futures;
 
-unsafe fn fake_clone(_: *const ()) -> RawWaker {
-    // Should never be called!
-    todo!()
-}
+fn no_op(_: *const ()) {}
+fn no_op_clone(_: *const()) -> RawWaker { noop_raw_waker() }
 
-unsafe fn fake_wake(_: *const ()) {
-    // Should never be called!
-    todo!()
-}
+static RWVT: RawWakerVTable = RawWakerVTable::new(
+    no_op_clone,
+    no_op,
+    no_op,
+    no_op,
+);
 
-unsafe fn fake_wake_by_ref(_: *const ()) {
-    // Should never be called!
-    todo!()
+fn noop_raw_waker() -> RawWaker {
+    RawWaker::new(core::ptr::null(), &RWVT)
 }
-
-unsafe fn fake_drop(_: *const ()) {
-    // Don't panic, this does happen
-    // TODO: ???
-}
-
-static RWVT: RawWakerVTable =
-    RawWakerVTable::new(fake_clone, fake_wake, fake_wake_by_ref, fake_drop);
 
 /// A single-future non-blocking executor
 pub struct Cassette<T>
