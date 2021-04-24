@@ -1,4 +1,4 @@
-// #![cfg_attr(not(test), no_std)]
+#![cfg_attr(not(test), no_std)]
 
 //! A simple, single-future, non-blocking executor intended for building state machines. Designed to be no-std and embedded friendly.
 //!
@@ -236,7 +236,6 @@ fn no_op_wake(putter: *const ()) {
         };
         abr.store(true, Ordering::SeqCst);
     }
-    println!("wake:  {:016X?}", putter);
 }
 
 fn no_op_wbr(putter: *const ()) {
@@ -246,15 +245,11 @@ fn no_op_wbr(putter: *const ()) {
         };
         abr.store(true, Ordering::SeqCst);
     }
-    println!("wbr:   {:016X?}", putter);
 }
 
-fn no_op_drop(putter: *const ()) {
-    println!("drop:  {:016X?}", putter);
-}
+fn no_op_drop(putter: *const ()) { }
 
 fn no_op_clone(putter: *const()) -> RawWaker {
-    println!("clone: {:016X?}", putter);
     RawWaker::new(putter, &RWVT)
 }
 
