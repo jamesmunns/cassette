@@ -221,22 +221,48 @@ use core::{
     future::Future,
     pin::Pin,
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
+    sync::atomic::{AtomicBool, Ordering},
 };
 pub mod futures;
 
-fn no_op(_: *const ()) {}
-fn no_op_clone(_: *const()) -> RawWaker { noop_raw_waker() }
+// fn no_op(_: *const ()) {
+//
+// }
 
+fn no_op_wake(putter: *const ()) {
+    if !putter.is_null() {
+        let abr = unsafe {
+            &*putter.cast::<AtomicBool>()
+        };
+        abr.store(true, Ordering::SeqCst);
+    }
+}
+
+fn no_op_wbr(putter: *const ()) {
+    if !putter.is_null() {
+        let abr = unsafe {
+            &*putter.cast::<AtomicBool>()
+        };
+        abr.store(true, Ordering::SeqCst);
+    }
+}
+
+fn no_op_drop(putter: *const ()) { }
+
+fn no_op_clone(putter: *const()) -> RawWaker {
+    RawWaker::new(putter, &RWVT)
+}
+
+// clone: unsafe fn(*const ()) -> RawWaker,
+// wake: unsafe fn(*const ()),
+// wake_by_ref: unsafe fn(*const ()),
+// drop: unsafe fn(*const ()),
 static RWVT: RawWakerVTable = RawWakerVTable::new(
     no_op_clone,
-    no_op,
-    no_op,
-    no_op,
+    no_op_wake,
+    no_op_wbr,
+    no_op_drop,
 );
-
-fn noop_raw_waker() -> RawWaker {
-    RawWaker::new(core::ptr::null(), &RWVT)
-}
 
 /// A single-future non-blocking executor
 pub struct Cassette<T>
@@ -246,6 +272,17 @@ where
     thing: T,
     fake_wake: Waker,
     done: bool,
+    wake_hint: Option<&'static AtomicBool>,
+}
+
+fn new_raw_waker(data: Option<&'static AtomicBool>) -> RawWaker {
+    let putter = if let Some(ab) = data {
+        ab as *const _ as *const ()
+    } else {
+        core::ptr::null()
+    };
+
+    RawWaker::new(putter, &RWVT)
 }
 
 impl<T> Cassette<T>
@@ -284,15 +321,23 @@ where
     ///     /* ... */
     /// }
     /// ```
-    pub fn new(thing: T) -> Self {
-        let raw_waker = RawWaker::new(core::ptr::null(), &RWVT);
+    pub fn new(thing: T, flag: Option<&'static AtomicBool>) -> Self {
+        let raw_waker = new_raw_waker(flag.clone());
         let waker = unsafe { Waker::from_raw(raw_waker) };
-
 
         Self {
             thing,
             fake_wake: waker,
             done: false,
+            wake_hint: flag,
+        }
+    }
+
+    pub fn wake_hint(&mut self) -> bool {
+        if let Some(ab) = self.wake_hint {
+            ab.swap(false, Ordering::SeqCst)
+        } else {
+            false
         }
     }
 
