@@ -1,7 +1,7 @@
 use core::{
     future::Future,
     pin::Pin,
-    sync::atomic::{AtomicU32, Ordering},
+    sync::atomic::{AtomicU32, AtomicBool, Ordering},
     task::{Context, Poll},
 };
 
@@ -16,7 +16,7 @@ struct Demo {
 
 impl Demo {
     async fn entry(&mut self) {
-        for _ in 0..10 {
+        for _ in 0..1 {
             self.entry_1().await;
             self.entry_2().await;
         }
@@ -63,14 +63,23 @@ impl Demo {
     }
 }
 
+static FLAG: AtomicBool = AtomicBool::new(false);
+
 fn main() {
     let mut demo = Demo { lol: 100 };
     let x = demo.entry();
     pin_mut!(x);
 
-    let mut cm = Cassette::new(x);
+    let mut cm = Cassette::new(x, Some(&FLAG));
 
     loop {
+        if !cm.wake_hint() {
+            println!("Sleeping!");
+            std::thread::sleep_ms(200);
+        } else {
+            println!("Not Sleeping!");
+        }
+
         if let Some(x) = cm.poll_on() {
             println!("Done!: `{:?}`", x);
             break;
@@ -83,10 +92,11 @@ static FAKE: AtomicU32 = AtomicU32::new(0);
 struct CountFuture;
 impl Future for CountFuture {
     type Output = ();
-    fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let x = FAKE.fetch_add(1, Ordering::SeqCst);
         print!("{}, ", x);
         if (x % 5) == 0 {
+            cx.waker().wake_by_ref();
             Poll::Ready(())
         } else {
             Poll::Pending
