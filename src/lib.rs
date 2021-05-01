@@ -377,3 +377,32 @@ where
         self.done
     }
 }
+
+/// Cooperatively gives up a timeslice to the task scheduler.
+///
+/// Inspired by async-std 1.9.x
+#[inline]
+pub async fn yield_now() {
+    YieldNow(false).await
+}
+
+
+struct YieldNow(bool);
+
+impl Future for YieldNow {
+    type Output = ();
+
+    // inspired by async-std v1.9.0
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        if !self.0 {
+            self.0 = true;
+
+            // NOTE(AJM): This probably *isn't* necessary, as
+            // the waker is basically a NOP.
+            cx.waker().wake_by_ref();
+            Poll::Pending
+        } else {
+            Poll::Ready(())
+        }
+    }
+}
