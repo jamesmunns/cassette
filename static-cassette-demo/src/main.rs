@@ -1,7 +1,6 @@
 use static_alloc::Bump;
 use once_cell::sync::OnceCell;
 use std::sync::Mutex;
-use unsize::{Coercion, CoerceUnsize};
 use core::{
     future::Future,
     pin::Pin,
@@ -33,7 +32,7 @@ fn main() {
     let leaked = A.leak(leaked_demo.entry()).map_err(drop).unwrap();
 
     // Coerce it to a dyn Future...
-    let deu = leaked.unsize(Coercion!(to dyn Future<Output=()>));
+    let deu: &mut dyn Future<Output=()> = leaked;
 
     // Pin it...
     let pdeu = unsafe { core::pin::Pin::new_unchecked(deu) };
