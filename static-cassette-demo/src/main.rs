@@ -13,11 +13,8 @@ use cassette::Cassette;
 static A: Bump<[u8; 128]> = Bump::uninit();
 static OML: OnceCell<Mutex<Yolo>> = OnceCell::new();
 
-// shh bb no
-unsafe impl Send for Yolo { }
-
 struct Yolo {
-    ip: Cassette<Pin<&'static mut dyn Future<Output = ()>>>
+    ip: Cassette<Pin<&'static mut (dyn Future<Output = ()> + Send)>>
 }
 
 fn main() {
@@ -32,7 +29,7 @@ fn main() {
     let leaked = A.leak(leaked_demo.entry()).map_err(drop).unwrap();
 
     // Coerce it to a dyn Future...
-    let deu: &mut dyn Future<Output=()> = leaked;
+    let deu: &mut (dyn Future<Output=()> + Send) = leaked;
 
     // Pin it...
     let pdeu = unsafe { core::pin::Pin::new_unchecked(deu) };
@@ -45,10 +42,12 @@ fn main() {
     OML.set(Mutex::new(Yolo { ip: cas })).map_err(drop).unwrap();
 
     // Run...
-    loop {
-        // Look! An interrupt occurred!
-        fake_rtic_outer();
-    }
+    std::thread::spawn(|| {
+        loop {
+            // Look! An interrupt occurred!
+            fake_rtic_outer();
+        }
+    }).join();
 }
 
 fn fake_rtic_outer() {
