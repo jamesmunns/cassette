@@ -10,7 +10,7 @@ use core::{
 
 use cassette::Cassette;
 
-static A: Bump<[u8; 4096]> = Bump::uninit();
+static A: Bump<[u8; 128]> = Bump::uninit();
 static OML: OnceCell<Mutex<Yolo>> = OnceCell::new();
 
 // shh bb no
