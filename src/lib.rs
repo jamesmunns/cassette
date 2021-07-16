@@ -234,6 +234,7 @@ static RWVT: RawWakerVTable = RawWakerVTable::new(
     no_op,
 );
 
+#[inline]
 fn noop_raw_waker() -> RawWaker {
     RawWaker::new(core::ptr::null(), &RWVT)
 }
@@ -285,7 +286,7 @@ where
     /// }
     /// ```
     pub fn new(thing: T) -> Self {
-        let raw_waker = RawWaker::new(core::ptr::null(), &RWVT);
+        let raw_waker = noop_raw_waker();
         let waker = unsafe { Waker::from_raw(raw_waker) };
 
 
