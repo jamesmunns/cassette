@@ -222,7 +222,7 @@ use core::{
     pin::Pin,
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
-pub mod futures;
+pub use futures;
 
 fn no_op(_: *const ()) {}
 fn no_op_clone(_: *const()) -> RawWaker { noop_raw_waker() }

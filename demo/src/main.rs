@@ -7,7 +7,7 @@ use core::{
 
 use cassette::{
     Cassette,
-    pin_mut,
+    futures::pin_mut,
 };
 
 struct Demo {

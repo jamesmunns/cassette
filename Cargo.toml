@@ -11,3 +11,10 @@ homepage = "https://github.com/jamesmunns/cassette"
 repository = "https://github.com/jamesmunns/cassette"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies.futures]
+version = "0.4.0-alpha.0"
+default-features = false
+
+[patch.crates-io.futures]
+git = "https://github.com/taiki-e/futures-rs"
+branch = "cfg_target_has_atomic-2"
