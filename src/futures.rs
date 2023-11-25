@@ -29,6 +29,7 @@ use core::task::{Context, Poll};
 /// let _: Pin<&mut Foo> = foo;
 /// ```
 #[macro_export]
+#[deprecated(since = "0.2.4", note = "use `core::pin::pin` instead")]
 macro_rules! pin_mut {
     ($($x:ident),* $(,)?) => { $(
         // Move the value to ensure that it is owned
@@ -53,6 +54,7 @@ where
 }
 
 /// Future for the [`poll_fn`] function.
+#[deprecated(since = "0.2.4", note = "use `core::future::PollFn` instead")]
 #[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct PollFn<F> {
     f: F,
@@ -79,6 +81,7 @@ impl<F> Unpin for PollFn<F> {}
 /// assert_eq!(read_future.await, "Hello, World!".to_owned());
 /// # }
 /// ```
+#[deprecated(since = "0.2.4", note = "use `core::future::poll_fn` instead")]
 pub fn poll_fn<T, F>(f: F) -> PollFn<F>
 where
     F: FnMut(&mut Context<'_>) -> Poll<T>

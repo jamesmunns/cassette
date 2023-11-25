@@ -222,6 +222,10 @@ use core::{
     pin::Pin,
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
+#[deprecated(
+    since = "0.2.4",
+    note = "all items of this mod were integrated into `core`"
+)]
 pub mod futures;
 
 fn no_op(_: *const ()) {}
