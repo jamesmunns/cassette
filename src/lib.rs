@@ -155,15 +155,14 @@
 //! # }
 //! #
 //!
-//! use cassette::{pin_mut, Cassette};
+//! use cassette::Cassette;
 //!
 //! fn main() {
 //!     // Make a new struct
 //!     let mut demo = Demo { lol: 100 };
 //!
 //!     // Call the entry point future, and pin it
-//!     let x = demo.entry();
-//!     pin_mut!(x);
+//!     let x = core::pin::pin!(demo.entry());
 //!
 //!     // Give the pinned future to Cassette
 //!     // for execution
@@ -176,7 +175,7 @@
 //! ### Step 3 - You poll on it until it resolves (or forever)
 //!
 //! ```rust
-//! # use cassette::{pin_mut, Cassette};
+//! # use cassette::Cassette;
 //!
 //! # struct Demo {
 //! #     lol: u32,
@@ -192,8 +191,7 @@
 //! #    let mut demo = Demo { lol: 100 };
 //! #
 //! #    // Call the entry point future, and pin it
-//! #    let x = demo.entry();
-//! #    pin_mut!(x);
+//! #    let x = core::pin::pin!(demo.entry());
 //! #
 //! #    // Give the pinned future to Cassette
 //! #    // for execution
@@ -222,21 +220,13 @@ use core::{
     pin::Pin,
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
-#[deprecated(
-    since = "0.2.4",
-    note = "all items of this mod were integrated into `core`"
-)]
-pub mod futures;
 
 fn no_op(_: *const ()) {}
-fn no_op_clone(_: *const()) -> RawWaker { noop_raw_waker() }
+fn no_op_clone(_: *const ()) -> RawWaker {
+    noop_raw_waker()
+}
 
-static RWVT: RawWakerVTable = RawWakerVTable::new(
-    no_op_clone,
-    no_op,
-    no_op,
-    no_op,
-);
+static RWVT: RawWakerVTable = RawWakerVTable::new(no_op_clone, no_op, no_op, no_op);
 
 #[inline]
 fn noop_raw_waker() -> RawWaker {
@@ -262,7 +252,7 @@ where
     /// # Example
     ///
     /// ```
-    /// use cassette::{pin_mut, Cassette};
+    /// use cassette::Cassette;
     ///
     /// struct Demo {
     ///     lol: u32,
@@ -279,8 +269,7 @@ where
     ///     let mut demo = Demo { lol: 100 };
     ///
     ///     // Call the entry point future, and pin it
-    ///     let x = demo.entry();
-    ///     pin_mut!(x);
+    ///     let x = core::pin::pin!(demo.entry());
     ///
     ///     // Give the pinned future to Cassette
     ///     // for execution
@@ -292,7 +281,6 @@ where
     pub fn new(thing: T) -> Self {
         let raw_waker = noop_raw_waker();
         let waker = unsafe { Waker::from_raw(raw_waker) };
-
 
         Self {
             thing,
@@ -310,7 +298,7 @@ where
     /// # Example
     ///
     /// ```
-    /// use cassette::{pin_mut, Cassette};
+    /// use cassette::Cassette;
     ///
     /// struct Demo {
     ///     lol: u32,
@@ -327,8 +315,7 @@ where
     ///     let mut demo = Demo { lol: 100 };
     ///
     ///     // Call the entry point future, and pin it
-    ///     let x = demo.entry();
-    ///     pin_mut!(x);
+    ///     let x = core::pin::pin!(demo.entry());
     ///
     ///     // Give the pinned future to Cassette
     ///     // for execution
@@ -365,10 +352,7 @@ where
     /// been completed as `Poll::Ready(_)`.
     pub fn block_on(mut self) -> <T as Future>::Output {
         // TODO
-        assert!(
-            !self.done,
-            "Blocked on completed future"
-        );
+        assert!(!self.done, "Blocked on completed future");
 
         loop {
             if let Some(val) = self.poll_on() {
@@ -390,7 +374,6 @@ where
 pub async fn yield_now() {
     YieldNow(false).await
 }
-
 
 struct YieldNow(bool);
 
