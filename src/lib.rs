@@ -411,3 +411,11 @@ impl Future for YieldNow {
         }
     }
 }
+
+/// Runs a future to completion on the current thread.
+///
+/// This function will block the caller until the given future has completed.
+pub fn block_on<F: Future>(f: F) -> <F as Future>::Output {
+    let f = core::pin::pin!(f);
+    Cassette::new(f).block_on()
+}
