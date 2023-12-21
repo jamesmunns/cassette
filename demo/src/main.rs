@@ -5,10 +5,7 @@ use core::{
     task::{Context, Poll},
 };
 
-use cassette::{
-    Cassette,
-    pin_mut,
-};
+use cassette::Cassette;
 
 struct Demo {
     lol: u32,
@@ -65,8 +62,7 @@ impl Demo {
 
 fn main() {
     let mut demo = Demo { lol: 100 };
-    let x = demo.entry();
-    pin_mut!(x);
+    let x = core::pin::pin!(demo.entry());
 
     let mut cm = Cassette::new(x);
 
@@ -77,7 +73,6 @@ fn main() {
         }
     }
 }
-
 
 static FAKE: AtomicU32 = AtomicU32::new(0);
 struct CountFuture;
