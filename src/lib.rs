@@ -86,12 +86,13 @@
 //! # struct CountFuture;
 //! # impl Future for CountFuture {
 //! #     type Output = ();
-//! #     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+//! #     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
 //! #         let x = FAKE.fetch_add(1, Ordering::SeqCst);
 //! #         print!("{}, ", x);
 //! #         if (x % 5) == 0 {
 //! #             Poll::Ready(())
 //! #         } else {
+//! #             cx.waker().wake_by_ref();
 //! #             Poll::Pending
 //! #         }
 //! #     }
@@ -118,12 +119,13 @@
 //! struct CountFuture;
 //! impl Future for CountFuture {
 //!     type Output = ();
-//!     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+//!     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
 //!         let x = FAKE.fetch_add(1, Ordering::SeqCst);
 //!         print!("{}, ", x);
 //!         if (x % 5) == 0 {
 //!             Poll::Ready(())
 //!         } else {
+//!             cx.waker().wake_by_ref();
 //!             Poll::Pending
 //!         }
 //!     }
@@ -368,8 +370,6 @@ where
 }
 
 /// Cooperatively gives up a timeslice to the task scheduler.
-///
-/// Inspired by async-std 1.9.x
 #[inline]
 pub async fn yield_now() {
     YieldNow(false).await
@@ -385,8 +385,12 @@ impl Future for YieldNow {
         if !self.0 {
             self.0 = true;
 
-            // NOTE(AJM): This probably *isn't* necessary, as
-            // the waker is basically a NOP.
+            // Wake immediately, so we get polled again
+            // in the next timeslice.
+            //
+            // Not necessary if our executor is `Cassette`, but
+            // on other executors we might produce a deadlock
+            // otherwise.
             cx.waker().wake_by_ref();
             Poll::Pending
         } else {

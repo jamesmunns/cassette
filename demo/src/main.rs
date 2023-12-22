@@ -78,12 +78,13 @@ static FAKE: AtomicU32 = AtomicU32::new(0);
 struct CountFuture;
 impl Future for CountFuture {
     type Output = ();
-    fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let x = FAKE.fetch_add(1, Ordering::SeqCst);
         print!("{}, ", x);
         if (x % 5) == 0 {
             Poll::Ready(())
         } else {
+            cx.waker().wake_by_ref();
             Poll::Pending
         }
     }
