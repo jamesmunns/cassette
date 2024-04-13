@@ -215,7 +215,7 @@
 //!
 //! ## License
 //!
-//! [MPL v2.0](./../LICENSE)
+//! [MIT](https://github.com/jamesmunns/cassette/blob/main/LICENSE-MIT) or [Apache 2.0](https://github.com/jamesmunns/cassette/blob/main/LICENSE-APACHE)
 
 use core::{
     future::Future,
