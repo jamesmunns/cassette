@@ -347,7 +347,6 @@ where
     /// This method will panic if the contained future has already
     /// been completed as `Poll::Ready(_)`.
     pub fn block_on(mut self) -> <T as Future>::Output {
-        // TODO
         assert!(!self.done, "Blocked on completed future");
 
         loop {
