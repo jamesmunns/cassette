@@ -321,13 +321,13 @@ where
     /// while cm.poll_on().is_none() { }
     /// println!("Future done!");
     /// ```
-    //
-    // TODO: try_poll_on where an error is returned
-    // if `self.done == true`?
+    ///
+    /// ## Panics
+    ///
+    /// This method will panic if the contained future has already
+    /// been completed as `Poll::Ready(_)`.
     pub fn poll_on(&mut self) -> Option<<T as Future>::Output> {
-        if self.done {
-            todo!("Polled a done future");
-        }
+        assert!(!self.done, "Polled a completed future");
 
         let mut ctxt = Context::from_waker(&self.fake_wake);
         let y = Pin::new(&mut self.thing).poll(&mut ctxt);
@@ -395,6 +395,9 @@ impl Future for YieldNow {
 /// Runs a future to completion on the current thread.
 ///
 /// This function will block the caller until the given future has completed.
+///
+/// Be aware that this function performs busy-waiting; it repeatedly polls
+/// the future until completion and completely ignores context and wakers.
 pub fn block_on<F: Future>(f: F) -> <F as Future>::Output {
     let f = core::pin::pin!(f);
     Cassette::new(f).block_on()
