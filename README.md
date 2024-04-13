@@ -143,9 +143,4 @@ If you'd like to see a larger demo, I used Cassette to implement an I2C peripher
 
 ## License
 
-This crate is licensed under the [MPL v2.0](./LICENSE).
-
-The `futures` module includes code licensed under the MIT+Apache2.0 dual
-licenses from the `futures-rs` crate. Please see the upstream
-repository at https://github.com/rust-lang/futures-rs, and details
-of the license here: https://github.com/rust-lang/futures-rs#license
+This crate is licensed under the [MIT](./LICENSE-MIT) and [Apache 2.0](./LICENSE-APACHE) licenses.
