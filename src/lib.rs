@@ -266,19 +266,15 @@ where
     ///     }
     /// }
     ///
-    /// fn main() {
-    ///     // Make a new struct
-    ///     let mut demo = Demo { lol: 100 };
+    /// // Make a new struct
+    /// let mut demo = Demo { lol: 100 };
     ///
-    ///     // Call the entry point future, and pin it
-    ///     let x = core::pin::pin!(demo.entry());
+    /// // Call the entry point future, and pin it
+    /// let x = core::pin::pin!(demo.entry());
     ///
-    ///     // Give the pinned future to Cassette
-    ///     // for execution
-    ///     let mut cm = Cassette::new(x);
-    ///
-    ///     /* ... */
-    /// }
+    /// // Give the pinned future to Cassette
+    /// // for execution
+    /// let mut cm = Cassette::new(x);
     /// ```
     pub fn new(thing: T) -> Self {
         let raw_waker = noop_raw_waker();
@@ -312,20 +308,18 @@ where
     ///     }
     /// }
     ///
-    /// fn main() {
-    ///     // Make a new struct
-    ///     let mut demo = Demo { lol: 100 };
+    /// // Make a new struct
+    /// let mut demo = Demo { lol: 100 };
     ///
-    ///     // Call the entry point future, and pin it
-    ///     let x = core::pin::pin!(demo.entry());
+    /// // Call the entry point future, and pin it
+    /// let x = core::pin::pin!(demo.entry());
     ///
-    ///     // Give the pinned future to Cassette
-    ///     // for execution
-    ///     let mut cm = Cassette::new(x);
+    /// // Give the pinned future to Cassette
+    /// // for execution
+    /// let mut cm = Cassette::new(x);
     ///
-    ///     while cm.poll_on().is_none() { }
-    ///     println!("Future done!");
-    /// }
+    /// while cm.poll_on().is_none() { }
+    /// println!("Future done!");
     /// ```
     //
     // TODO: try_poll_on where an error is returned
